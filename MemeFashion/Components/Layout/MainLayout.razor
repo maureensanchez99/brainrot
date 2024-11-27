@@ -1,4 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+<head>
+    <link href="css/styles.css" rel="stylesheet" />
+</head>
 
 <div class="page">
     <main>
@@ -28,14 +33,14 @@
                             </NavLink>
                         </li>
                         <li class="nav-item">
-                            <NavLink class="nav-link" id="register-button" href="counter">
-                                <span class="oi oi-plus" aria-hidden="true"></span> Register
-                            </NavLink>
+                            <button class="nav-link" id="register-button" @onclick="HandleRegisterClickRegister">
+                                Register
+                            </button>
                         </li>
                         <li class="nav-item">
-                            <NavLink class="nav-link" id="signin-button" href="counter">
-                                <span class="oi oi-plus" aria-hidden="true"></span> Sign In
-                            </NavLink>
+                            <button class="nav-link" id="signin-button" @onclick="HandleRegisterClickSign">
+                                Sign Up
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -52,8 +57,14 @@
     private string? NavBarCssClass => collapseNavMenu ? null : "show";
     private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
 
-    private void ToggleNavMenu()
-    {
+    private void ToggleNavMenu(){
         collapseNavMenu = !collapseNavMenu;
     }
+    private void HandleRegisterClickRegister() {
+        NavigationManager.NavigateTo("/register");
+    }
+    private void HandleRegisterClickSign() {
+        NavigationManager.NavigateTo("/register");
+    }
+
 }
