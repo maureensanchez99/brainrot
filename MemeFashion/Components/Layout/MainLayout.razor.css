@@ -1,4 +1,4 @@
-.page {
+.page, .content {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -10,14 +10,90 @@ main {
     flex: 1;
 }
 
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
+.navbar {
+    margin-bottom: 1rem;
+}
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
+.navbar-dark .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #68984C;
+    text-decoration: none;
+}
+
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-toggler-icon {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.title-img {
+    background-image: url('/images/site/title_img.png');
+    width: 50px; 
+    height: 50px;  
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin-right: 1rem;
+}
+
+.nav-link {
+    color: #cccccc;
+    font-size: 1rem;
+    margin: 0 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: #E0E8E6;
+    text-decoration: none;
+}
+
+.navbar-nav .nav-item {
+    margin: 0 0.5rem;
+}
+
+.collapse {
+    flex-grow: 1;
+}
+
+.navbar-collapse {
+    justify-content: flex-end;
+}
+
+.navbar-collapse.show {
+    display: block !important;
+}
+
+.content {
+    flex: 1;
+    padding: 2rem;
+}
+
+.navbar-nav .nav-item #register-button,
+.navbar-nav .nav-item #signin-button {
+    display: inline-block;  /* Make them appear as buttons */
+    padding: 10px 20px;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 5px;
+    text-decoration: none;  /* Remove underline */
+}
+
+#register-button:hover, #signin-button:hover {
+    opacity: 0.8;
+}
+
+#register-button {
+    background-color: #D9D9D9 !important;
+    color: #68984C !important;
+}
+
+#signin-button {
+    background-color: #68984C !important;
+    color: #D9D9D9 !important;
 }
 
 @media (min-width: 641px) {
@@ -50,10 +126,26 @@ main {
     }
 }
 
-.title-img {
-    background-image: url('/images/site/title_img.png');
-    width: 50px; 
-    height: 50px;  
-    background-size: contain;
-    background-repeat: no-repeat;
+@media (max-width: 640.98px) {
+    .top-row {
+        justify-content: space-between;
+    }
+
+    .top-row ::deep a, .top-row ::deep .btn-link {
+        margin-left: 0;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .nav-link {
+        margin: 0.5rem 0;
+    }
+
+    .title-img {
+        width: 40px;  
+        height: 40px;
+    }
 }
