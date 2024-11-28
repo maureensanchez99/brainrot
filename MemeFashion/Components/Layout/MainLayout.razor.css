@@ -92,11 +92,29 @@ main {
 #register-button {
     background-color: #D9D9D9 !important;
     color: #68984C !important;
+    display: inline-block;   
+    padding: 5px 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;  
+    transition: opacity 0.2s ease;  
+    cursor: pointer;   
 }
 
 #signin-button {
     background-color: #68984C !important;
     color: #D9D9D9 !important;
+    display: inline-block;   
+    padding: 5px 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;  
+    transition: opacity 0.2s ease;  
+    cursor: pointer;   
 }
 
 @media (min-width: 641px) {
