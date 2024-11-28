@@ -1,5 +1,4 @@
 ﻿@inherits LayoutComponentBase
-@inject NavigationManager NavigationManager
 
 <head>
     <link href="css/styles.css" rel="stylesheet" />
@@ -7,7 +6,7 @@
 
 <div class="page">
     <main>
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+        <nav class="navbar navbar-expand-md navbar-dark mb-4">
             <div class="container-fluid">
                 <div class="title-img"></div>
                 <a class="navbar-brand" href="/">Meme Fashion</a>
@@ -33,14 +32,14 @@
                             </NavLink>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" id="register-button" @onclick="HandleRegisterClickRegister">
+                            <NavLink class="nav-link" id="register-button" href="/register">
                                 Register
-                            </button>
+                            </NavLink>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" id="signin-button" @onclick="HandleRegisterClickSign">
+                            <NavLink class="nav-link" id="signin-button" href="/signup">
                                 Sign Up
-                            </button>
+                            </NavLink>
                         </li>
                     </ul>
                 </div>
@@ -60,11 +59,4 @@
     private void ToggleNavMenu(){
         collapseNavMenu = !collapseNavMenu;
     }
-    private void HandleRegisterClickRegister() {
-        NavigationManager.NavigateTo("/register");
-    }
-    private void HandleRegisterClickSign() {
-        NavigationManager.NavigateTo("/register");
-    }
-
 }
