@@ -2,6 +2,74 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<main>
+    <div class="quote-block">
+        <h2>
+           Stay true, stay you — let AI guide your path and memes fuel 
+           your spirit on your internship journey 🌀✨ 
+        </h2>
+    </div>
+    <br>
+    <div class="outfit-suggestions">
+        <h3>Gain outfit ideas based on popular memes</h3>
+        <p>Try the generator using your favorite memes</p>
+        <div class="suggestion-wrapper">
+            <a href="outfitgenerator">
+                <div class="meme" id="don-pollo"></div>
+            </a>
+            <a href="outfitgenerator">
+                <div class="meme" id="gigachad"></div>
+            </a>
+            <a href="outfitgenerator">
+                <div class="meme" id="cavemanpatick"></div>
+            </a>
+        </div>
+    </div>
+</main>
 
-Welcome to your new app.
+<style>
+.quote-block {
+    background: linear-gradient(71deg, #68984C, #807A46 40%,#624D31);
+    border-radius: 5px;
+    color:#E0E8E6; 
+    padding: 60px 30px 60px 30px;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 50%);
+    margin-bottom: 50px;
+}
+
+p {
+    font-family: 'Comic Neue';
+    font-style: italic;
+    margin-left: 5px;
+}
+
+.suggestion-wrapper{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.meme {
+    width: 250px; 
+    height: 200px;  
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 5px;
+}
+
+#don-pollo {
+    background-image: url('images/memes/don_pollo.jpg');
+}
+
+#gigachad {
+    background-image: url('/images/memes/salt_bae.jpg');
+}
+
+#cavemanpatick {
+    background-image: url('images/memes/caveman_patrick.jpg');
+}
+
+</style>

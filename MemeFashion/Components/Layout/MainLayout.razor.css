@@ -35,13 +35,11 @@ main {
 
 .title-img {
     background-image: url('/images/site/title_img.png');
-    width: 70px; 
-    height: 70px;  
+    width: 60px; 
+    height: 60px;  
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    margin-left: 10px;
-    margin-right: 15px;
 }
 
 .nav-link {
@@ -162,7 +160,7 @@ main {
     margin: 0;
 }
 
-.p {
+p {
     font-size: 0.7rem;
     color: #4F4F4F;
     font-weight: 400;
@@ -174,6 +172,7 @@ main {
 .footer a {
     text-decoration: none;
     color: inherit;
+    font-family: 'Comic Neue';
 }
 
 .title-box { 
