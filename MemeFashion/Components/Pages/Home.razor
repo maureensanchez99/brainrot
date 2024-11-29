@@ -17,15 +17,16 @@
         <p>See if the gallery contains any of your favorite memes</p>
         <div class="suggestion-wrapper">
             <a href="outfitgenerator">
-                <div class="meme" id="don-pollo" @onclick="() => NavigateToGenerator('don_pollo.jpg')"></div>
+                <div class="meme" id="don-pollo" @onclick="@(async() => NavigateToGenerator("don_pollo.jpg"))"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="saltbae" @onclick="() => NavigateToGenerator('salt_bae.jpg')"></div>
+                <div class="meme" id="saltbae" @onclick="@(async() => NavigateToGenerator("salt_bae.jpg"))"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="cavemanpatrick" @onclick="() => NavigateToGenerator('caveman_patrick.jpg')"></div>
+                <div class="meme" id="cavemanpatrick" @onclick="@(async() => NavigateToGenerator("caveman_patrick.jpg"))"></div>
             </a>
         </div>
+
     </div>
 </main>
 
