@@ -7,6 +7,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddAntiforgery();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<OutfitGeneratorService>();
 
 var app = builder.Build();
 

@@ -1,8 +1,38 @@
 ﻿@page "/outfitgenerator"
 @rendermode InteractiveServer
+@inject OutfitGeneratorService OutfitService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Counter</PageTitle>
 
-@code {
+<h3>Outfit Generator</h3>
 
+<InputFile OnChange="@LoadFiles" multiple accept=".jpg,.jpeg,.png" />
+
+@if (imageUrls.Any())
+{
+    @foreach (var imageUrl in imageUrls)
+    {
+        <img src="@imageUrl" style="max-width: 200px; margin: 10px;" />
+    }
+}
+
+@code {
+    private List<string> imageUrls = new List<string>();
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        var uploadedFiles = e.GetMultipleFiles();
+        
+        foreach (var file in uploadedFiles)
+        {
+            if (file.ContentType.Contains("image"))
+            {
+                var buffers = new byte[file.Size];
+                await file.OpenReadStream().ReadAsync(buffers);
+                var imageUrl = $"data:image/png;base64,{Convert.ToBase64String(buffers)}";
+                imageUrls.Add(imageUrl);
+            }
+        }
+    }
 }
