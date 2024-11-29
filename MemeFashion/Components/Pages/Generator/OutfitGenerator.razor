@@ -1,0 +1,57 @@
+﻿@page "/imageeditor"
+@using System.Drawing
+@inject IJSRuntime JSRuntime
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="image-container">
+                @if (isLoading)
+                {
+                    <div class="loading">Loading...</div>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error">@errorMessage</div>
+                }
+                else if (!string.IsNullOrEmpty(currentImageUrl))
+                {
+                    <img src="@currentImageUrl" class="img-fluid" />
+                }
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="meme-gallery">
+                <h4>Meme Templates</h4>
+                @if (memeImages != null && memeImages.Any())
+                {
+                    <div class="gallery-nav">
+                        <button class="btn btn-primary" @onclick="PreviousPage" disabled="@(currentPage == 0)">Previous</button>
+                        <button class="btn btn-primary" @onclick="NextPage" disabled="@(currentPage >= (memeImages.Count - 1) / ImagesPerPage)">Next</button>
+                    </div>
+
+                    <div class="gallery-grid">
+                        @{
+                            var pageImages = memeImages
+                                .Skip(currentPage * ImagesPerPage)
+                                .Take(ImagesPerPage);
+
+                            foreach (var image in pageImages)
+                            {
+                                var imageUrl = $"images/memes/{image}";
+                                <div class="gallery-item" @onclick="() => SelectMemeFromGallery(imageUrl)">
+                                    <img src="@imageUrl" alt="meme template" />
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>No meme templates available.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
