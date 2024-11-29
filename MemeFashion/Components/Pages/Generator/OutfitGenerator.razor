@@ -4,77 +4,110 @@
 @rendermode InteractiveServer
 @inject OutfitGeneratorService OutfitService
 @inject IJSRuntime JSRuntime
+@inject MemeStateService MemeState
 
 <PageTitle>Outfit Generator</PageTitle>
 
-<div class="container">
-    <div class="upload-section mb-4">
-        <h3>Upload Your Meme</h3>
-        <p>Upload a meme to generate a color palette and matching outfit suggestions.</p>
-        <InputFile OnChange="@OnInputFileChange" accept=".jpg,.jpeg,.png" class="form-control" />
+<div class="meme-gallery mb-4">
+    <h3>Choose from Popular Memes</h3>
+    <p>Select a meme from our gallery to generate a color palette.</p>
+    
+    <div class="gallery-grid">
+        @{
+            var startIndex = currentPage * ImagesPerPage;
+        }
+        @foreach (var image in memeImages.Skip(startIndex).Take(ImagesPerPage))
+        {
+            <div class="gallery-item" @onclick="() => SelectMemeFromGallery(image)">
+                <img src="@($"/images/memes/{image}")" alt="@image" />
+            </div>
+        }
     </div>
-
-    @if (isLoading)
-    {
-        <div class="loading-indicator mt-3">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p>Processing your image...</p>
-        </div>
-    }
-
-    @if (errorMessage != null)
-    {
-        <div class="alert alert-danger mt-3" role="alert">
-            @errorMessage
-        </div>
-    }
-
-
-    @if (colorPalette.Any())
-    {
-        <div class="color-palette-section mt-4">
-            <h4>Color Palette</h4>
-            <div class="color-palette-display">
-                @foreach (var color in colorPalette)
-                {
-                    <div class="color-box" 
-                         style="background-color: rgb(@color.R,@color.G,@color.B);"
-                         @onclick="() => CopyColorCode(color)">
-                        <span class="color-code">RGB(@color.R,@color.G,@color.B)</span>
-                    </div>
-                }
-            </div>
-        </div>
-    }
+    
+    <div class="gallery-controls">
+        <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@(currentPage == 0)">
+            Previous
+        </button>
+        <button class="btn btn-secondary" @onclick="NextPage" disabled="@(startIndex + ImagesPerPage >= memeImages.Count)">
+            Next
+        </button>
+    </div>
 </div>
 
+@if (isLoading)
+{
+    <div class="loading-indicator mt-3">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Processing your image...</p>
+    </div>
+}
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger mt-3" role="alert">
+        @errorMessage
+    </div>
+}
+
+@if (colorPalette.Any())
+{
+    <div class="color-palette-section mt-4">
+        <h4>Color Palette</h4>
+        <div class="color-palette-display">
+            @foreach (var color in colorPalette)
+            {
+                <div class="color-box" 
+                     style="background-color: rgb(@color.R,@color.G,@color.B);"
+                     @onclick="() => CopyColorCode(color)">
+                    <span class="color-code">RGB(@color.R,@color.G,@color.B)</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <style>
-    .upload-section {
+    /* Keep all existing styles except .upload-section related ones */
+    .meme-gallery {
         background: #f8f9fa;
         padding: 2rem;
         border-radius: 8px;
         text-align: center;
+        margin-bottom: 2rem;
     }
 
-    .image-gallery {
-        display: flex;
-        flex-wrap: wrap;
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
+        margin: 1rem 0;
     }
 
-    .image-card {
-        background: white;
-        padding: 0.5rem;
+    .gallery-item {
+        cursor: pointer;
+        transition: transform 0.2s;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
     }
 
-    .uploaded-image {
-        max-width: 200px;
-        height: auto;
-        border-radius: 4px;
+    .gallery-item:hover {
+        transform: scale(1.05);
+    }
+
+    .gallery-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .gallery-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
     }
 
     .color-palette-display {
@@ -124,45 +157,73 @@
     private List<Color> colorPalette = new List<Color>();
     private bool isLoading = false;
     private string? errorMessage;
+    private List<string> memeImages = new();
+    private int currentPage = 0;
+    private const int ImagesPerPage = 4;
 
-    private async Task OnInputFileChange(InputFileChangeEventArgs e)
-    {
-        try 
+    protected override async Task OnInitializedAsync() {
+        await base.OnInitializedAsync();
+
+        var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var memePath = Path.Combine(webRoot, "images", "memes");
+        if (Directory.Exists(memePath))
         {
-            errorMessage = null;
+            memeImages = Directory.GetFiles(memePath)
+                .Select(Path.GetFileName)
+                .Where(f => f.EndsWith(".jpg") || f.EndsWith(".png"))
+                .ToList();
+        }
+
+        // Process selected meme if any
+        if (!string.IsNullOrEmpty(MemeState.SelectedMeme))
+        {
+            await SelectMemeFromGallery(MemeState.SelectedMeme);
+            MemeState.SetSelectedMeme(null); // Clear the selection after processing
+        }
+    }
+
+    private void NextPage()
+    {
+        if ((currentPage + 1) * ImagesPerPage < memeImages.Count)
+        {
+            currentPage++;
+            StateHasChanged();
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 0)
+        {
+            currentPage--;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectMemeFromGallery(string imageName)
+    {
+        private async Task SelectMemeFromGallery(string imagePath)
+{
+        try
+        {
             isLoading = true;
             StateHasChanged();
 
-            if (e.File.Size > 5242880) // 5MB limit
-        {
-            errorMessage = "File is too large. Maximum size is 5MB.";
-            return;
-        }
-
-        if (!e.File.ContentType.StartsWith("image/"))
-        {
-            errorMessage = "Please upload a valid image file.";
-            return;
-        }
-
-            // Convert the uploaded file to a data URL
-            var imageFile = e.File;
-            var buffer = new byte[imageFile.Size];
-            await imageFile.OpenReadStream().ReadAsync(buffer);
-            var imageBase64 = Convert.ToBase64String(buffer);
-            var imageFormat = imageFile.ContentType;
-            currentImageUrl = $"data:{imageFormat};base64,{imageBase64}";
-
-            using var ms = new MemoryStream(buffer);
-            using var image = Image.Load<Rgba32>(ms);
+            // Extract just the filename from the full path
+            string imageName = Path.GetFileName(imagePath);
+            var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var fullImagePath = Path.Combine(webRoot, "images", "memes", imageName);
             
+            using var image = Image.Load<Rgba32>(fullImagePath);
             var newPalette = await GenerateColorPalette(image);
             colorPalette = new List<Color>(newPalette);
+            currentImageUrl = imagePath; // Use the original path for the URL
         }
+}
+
         catch (Exception ex)
         {
             errorMessage = $"Error processing image: {ex.Message}";
-            Console.WriteLine($"Error: {ex.Message}");
         }
         finally
         {
@@ -177,7 +238,6 @@
         {
             string colorCode = $"rgb({color.R},{color.G},{color.B})";
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", colorCode);
-            // Could add a toast notification here
         }
         catch (Exception ex)
         {
@@ -191,10 +251,8 @@
         {
             var pixelCount = new Dictionary<Color, int>();
             
-            // Resize image for faster processing
             image.Mutate(x => x.Resize(100, 0));
 
-            // Count occurrence of each color
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
@@ -234,6 +292,17 @@
         public override int GetHashCode()
         {
             return HashCode.Combine(R, G, B);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        if (!string.IsNullOrEmpty(MemeState.SelectedMeme))
+        {
+            await SelectMemeFromGallery(MemeState.SelectedMeme);
+            // Clear the selection after processing
+            MemeState.SetSelectedMeme(null);
         }
     }
 }

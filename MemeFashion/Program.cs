@@ -8,6 +8,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntiforgery();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<OutfitGeneratorService>();
+// Add this line with the other service registrations
+builder.Services.AddScoped<MemeStateService>();
 
 var app = builder.Build();
 
