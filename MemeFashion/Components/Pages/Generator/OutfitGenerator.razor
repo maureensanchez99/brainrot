@@ -1,38 +1,239 @@
 ﻿@page "/outfitgenerator"
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.PixelFormats
 @rendermode InteractiveServer
 @inject OutfitGeneratorService OutfitService
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>Outfit Generator</PageTitle>
 
-<h3>Outfit Generator</h3>
+<div class="container">
+    <div class="upload-section mb-4">
+        <h3>Upload Your Meme</h3>
+        <p>Upload a meme to generate a color palette and matching outfit suggestions.</p>
+        <InputFile OnChange="@OnInputFileChange" accept=".jpg,.jpeg,.png" class="form-control" />
+    </div>
 
-<InputFile OnChange="@LoadFiles" multiple accept=".jpg,.jpeg,.png" />
-
-@if (imageUrls.Any())
-{
-    @foreach (var imageUrl in imageUrls)
+    @if (isLoading)
     {
-        <img src="@imageUrl" style="max-width: 200px; margin: 10px;" />
+        <div class="loading-indicator mt-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Processing your image...</p>
+        </div>
     }
-}
+
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            @errorMessage
+        </div>
+    }
+
+
+    @if (colorPalette.Any())
+    {
+        <div class="color-palette-section mt-4">
+            <h4>Color Palette</h4>
+            <div class="color-palette-display">
+                @foreach (var color in colorPalette)
+                {
+                    <div class="color-box" 
+                         style="background-color: rgb(@color.R,@color.G,@color.B);"
+                         @onclick="() => CopyColorCode(color)">
+                        <span class="color-code">RGB(@color.R,@color.G,@color.B)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .upload-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .image-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .image-card {
+        background: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .uploaded-image {
+        max-width: 200px;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .color-palette-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .color-box {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .color-box:hover {
+        transform: scale(1.05);
+    }
+
+    .color-code {
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .color-box:hover .color-code {
+        opacity: 1;
+    }
+
+    .loading-indicator {
+        text-align: center;
+    }
+</style>
 
 @code {
-    private List<string> imageUrls = new List<string>();
+    private string? currentImageUrl;
+    private List<Color> colorPalette = new List<Color>();
+    private bool isLoading = false;
+    private string? errorMessage;
 
-    private async Task LoadFiles(InputFileChangeEventArgs e)
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
-        var uploadedFiles = e.GetMultipleFiles();
-        
-        foreach (var file in uploadedFiles)
+        try 
         {
-            if (file.ContentType.Contains("image"))
+            errorMessage = null;
+            isLoading = true;
+            StateHasChanged();
+
+            if (e.File.Size > 5242880) // 5MB limit
+        {
+            errorMessage = "File is too large. Maximum size is 5MB.";
+            return;
+        }
+
+        if (!e.File.ContentType.StartsWith("image/"))
+        {
+            errorMessage = "Please upload a valid image file.";
+            return;
+        }
+
+            // Convert the uploaded file to a data URL
+            var imageFile = e.File;
+            var buffer = new byte[imageFile.Size];
+            await imageFile.OpenReadStream().ReadAsync(buffer);
+            var imageBase64 = Convert.ToBase64String(buffer);
+            var imageFormat = imageFile.ContentType;
+            currentImageUrl = $"data:{imageFormat};base64,{imageBase64}";
+
+            using var ms = new MemoryStream(buffer);
+            using var image = Image.Load<Rgba32>(ms);
+            
+            var newPalette = await GenerateColorPalette(image);
+            colorPalette = new List<Color>(newPalette);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error processing image: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyColorCode(Color color)
+    {
+        try
+        {
+            string colorCode = $"rgb({color.R},{color.G},{color.B})";
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", colorCode);
+            // Could add a toast notification here
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error copying color code: {ex.Message}");
+        }
+    }
+
+    private async Task<List<Color>> GenerateColorPalette(Image<Rgba32> image) 
+    {
+        return await Task.Run(() => 
+        {
+            var pixelCount = new Dictionary<Color, int>();
+            
+            // Resize image for faster processing
+            image.Mutate(x => x.Resize(100, 0));
+
+            // Count occurrence of each color
+            for (int y = 0; y < image.Height; y++)
             {
-                var buffers = new byte[file.Size];
-                await file.OpenReadStream().ReadAsync(buffers);
-                var imageUrl = $"data:image/png;base64,{Convert.ToBase64String(buffers)}";
-                imageUrls.Add(imageUrl);
+                for (int x = 0; x < image.Width; x++)
+                {
+                    var pixel = image[x, y];
+                    var color = new Color { R = pixel.R, G = pixel.G, B = pixel.B };
+                    if (pixelCount.ContainsKey(color))
+                        pixelCount[color]++;
+                    else
+                        pixelCount[color] = 1;
+                }
             }
+
+            return pixelCount
+                .OrderByDescending(x => x.Value)
+                .Take(5)
+                .Select(x => x.Key)
+                .ToList();
+        });
+    }
+
+    public class Color
+    {
+        public byte R { get; set; }
+        public byte G { get; set; }
+        public byte B { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Color other)
+            {
+                return R == other.R && G == other.G && B == other.B;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(R, G, B);
         }
     }
 }
