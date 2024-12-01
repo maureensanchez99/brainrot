@@ -5,11 +5,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddAntiforgery();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<OutfitGeneratorService>();
-// Add this line with the other service registrations
-builder.Services.AddScoped<MemeStateService>();
 
 var app = builder.Build();
 
@@ -21,25 +16,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseStaticFiles();
 app.UseHttpsRedirection();
-
-app.UseRouting();
 
 app.UseAntiforgery();
 
-app.UseAuthorization();
-
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-    
-app.UseStaticFiles();
-app.UseHttpsRedirection();
-app.UseRouting();
-app.UseAntiforgery();
-app.UseAuthorization();
-app.MapStaticAssets();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
