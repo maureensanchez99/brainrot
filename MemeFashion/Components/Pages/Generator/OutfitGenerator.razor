@@ -1,57 +1,209 @@
-﻿@page "/imageeditor"
-@using System.Drawing
+﻿@page "/outfitgenerator"
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.PixelFormats
 @inject IJSRuntime JSRuntime
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-8">
-            <div class="image-container">
-                @if (isLoading)
-                {
-                    <div class="loading">Loading...</div>
-                }
-                else if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="error">@errorMessage</div>
-                }
-                else if (!string.IsNullOrEmpty(currentImageUrl))
-                {
-                    <img src="@currentImageUrl" class="img-fluid" />
-                }
+<PageTitle>Outfit Generator</PageTitle>
+
+<div class="meme-gallery mb-4">
+    <h3>Choose from Popular Memes</h3>
+    <p>Select a meme from our gallery to generate a color palette.</p>
+    
+    <div class="gallery-grid">
+        @foreach (var image in memeImages.Skip(currentPage * ImagesPerPage).Take(ImagesPerPage))
+        {
+            <div class="gallery-item" @onclick="() => SelectMemeFromGallery(image)">
+                <img src="@($"/images/memes/{image}")" alt="@image" />
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="meme-gallery">
-                <h4>Meme Templates</h4>
-                @if (memeImages != null && memeImages.Any())
-                {
-                    <div class="gallery-nav">
-                        <button class="btn btn-primary" @onclick="PreviousPage" disabled="@(currentPage == 0)">Previous</button>
-                        <button class="btn btn-primary" @onclick="NextPage" disabled="@(currentPage >= (memeImages.Count - 1) / ImagesPerPage)">Next</button>
-                    </div>
-
-                    <div class="gallery-grid">
-                        @{
-                            var pageImages = memeImages
-                                .Skip(currentPage * ImagesPerPage)
-                                .Take(ImagesPerPage);
-
-                            foreach (var image in pageImages)
-                            {
-                                var imageUrl = $"images/memes/{image}";
-                                <div class="gallery-item" @onclick="() => SelectMemeFromGallery(imageUrl)">
-                                    <img src="@imageUrl" alt="meme template" />
-                                </div>
-                            }
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p>No meme templates available.</p>
-                }
-            </div>
-        </div>
+        }
+    </div>
+    
+    <div class="gallery-controls">
+        <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@(currentPage == 0)">
+            Previous
+        </button>
+        <button class="btn btn-secondary" @onclick="NextPage" disabled="@((currentPage + 1) * ImagesPerPage >= memeImages.Count)">
+            Next
+        </button>
     </div>
 </div>
+
+@if (isLoading)
+{
+    <div class="loading-indicator mt-3">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Processing your image...</p>
+    </div>
+}
+
+@if (colorPalette.Any())
+{
+    <div>
+        <h4>Color Palette</h4>
+        <ul>
+            @foreach (var color in colorPalette)
+            {
+                <li>RGB(@color.R, @color.G, @color.B)</li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <p>No colors found</p>
+}
+
+<style>
+    .meme-gallery {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .gallery-item {
+        cursor: pointer;
+        transition: transform 0.2s;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .gallery-item:hover {
+        transform: scale(1.05);
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .color-palette-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .color-box {
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        display: block; 
+        border: 1px solid black;
+    }
+</style>
+
+@code {
+    private List<string> memeImages = new();
+    private List<Color> colorPalette = new();
+    private bool isLoading = false;
+    private int currentPage = 0;
+    private const int ImagesPerPage = 6;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var memePath = Path.Combine(webRoot, "images", "memes");
+        if (Directory.Exists(memePath))
+        {
+            memeImages = Directory.GetFiles(memePath)
+                .Select(Path.GetFileName)
+                .Where(f => f.EndsWith(".jpg") || f.EndsWith(".png"))
+                .ToList();
+        }
+    }
+
+    private void NextPage()
+    {
+        if ((currentPage + 1) * ImagesPerPage < memeImages.Count)
+        {
+            currentPage++;
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 0)
+        {
+            currentPage--;
+        }
+    }
+
+    private async Task SelectMemeFromGallery(string imageName)
+    {
+        try
+        {
+            isLoading = true;
+
+            var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var fullImagePath = Path.Combine(webRoot, "images", "memes", imageName);
+
+            Console.WriteLine($"Processing Image: {fullImagePath}");
+
+            using var image = Image.Load<Rgba32>(fullImagePath);
+            Console.WriteLine($"Image Loaded: Width={image.Width}, Height={image.Height}");
+
+            colorPalette = await GenerateColorPalette(image);
+            StateHasChanged(); // Force UI refresh
+
+            Console.WriteLine($"Palette Count: {colorPalette.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CopyColorCode(Color color)
+    {
+        var colorCode = $"rgb({color.R},{color.G},{color.B})";
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", colorCode);
+    }
+
+    private string GetContrastColor(Color color)
+    {
+        // Calculate brightness and return contrasting color (black or white)
+        double brightness = (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) / 255;
+        return brightness > 0.5 ? "black" : "white";
+    }
+
+    private async Task<List<Color>> GenerateColorPalette(Image<Rgba32> image)
+    {
+        return await Task.Run(() =>
+        {
+            var colors = new Dictionary<Color, int>();
+            image.Mutate(x => x.Resize(100, 0)); // Reduce size for faster processing
+
+            for (int y = 0; y < image.Height; y++)
+            {
+                for (int x = 0; x < image.Width; x++)
+                {
+                    var pixel = image[x, y];
+                    var color = new Color { R = pixel.R, G = pixel.G, B = pixel.B };
+                    colors[color] = colors.TryGetValue(color, out var count) ? count + 1 : 1;
+                }
+            }
+
+            var result = colors.OrderByDescending(c => c.Value).Take(5).Select(c => c.Key).ToList();
+            Console.WriteLine($"Top Colors: {string.Join(", ", result.Select(c => $"RGB({c.R},{c.G},{c.B})"))}");
+            return result;
+        });
+    }
+
+    public class Color {
+        public byte R { get; set; }
+        public byte G { get; set; }
+        public byte B { get; set; }
+    }
+}
