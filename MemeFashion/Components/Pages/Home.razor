@@ -1,4 +1,6 @@
 ﻿@page "/"
+@inject MemeStateService MemeState
+@inject NavigationManager NavigationManager
 
 <PageTitle>Home</PageTitle>
 
@@ -12,18 +14,19 @@
     <br>
     <div class="outfit-suggestions">
         <h3>Gain outfit ideas based on popular memes</h3>
-        <p>Try the generator using your favorite memes</p>
+        <p>See if the gallery contains any of your favorite memes</p>
         <div class="suggestion-wrapper">
             <a href="outfitgenerator">
-                <div class="meme" id="don-pollo"></div>
+                <div class="meme" id="don-pollo" @onclick="@(async() => NavigateToGenerator("don_pollo.jpg"))"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="gigachad"></div>
+                <div class="meme" id="saltbae" @onclick="@(async() => NavigateToGenerator("salt_bae.jpg"))"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="cavemanpatick"></div>
+                <div class="meme" id="cavemanpatrick" @onclick="@(async() => NavigateToGenerator("caveman_patrick.jpg"))"></div>
             </a>
         </div>
+
     </div>
 </main>
 
@@ -64,12 +67,19 @@ p {
     background-image: url('images/memes/don_pollo.jpg');
 }
 
-#gigachad {
+#saltbae {
     background-image: url('/images/memes/salt_bae.jpg');
 }
 
-#cavemanpatick {
+#cavemanpatrick {
     background-image: url('images/memes/caveman_patrick.jpg');
 }
 
 </style>
+
+@code {
+   private void NavigateToGenerator(string memeName){
+        MemeState.SetSelectedMeme(memeName);
+        NavigationManager.NavigateTo("/outfitgenerator");
+    } 
+}
