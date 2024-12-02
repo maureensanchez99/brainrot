@@ -1,5 +1,4 @@
 ﻿@page "/"
-@inject MemeStateService MemeState
 @inject NavigationManager NavigationManager
 
 <PageTitle>Home</PageTitle>
@@ -17,13 +16,13 @@
         <p>See if the gallery contains any of your favorite memes</p>
         <div class="suggestion-wrapper">
             <a href="outfitgenerator">
-                <div class="meme" id="don-pollo" @onclick="@(async() => NavigateToGenerator("don_pollo.jpg"))"></div>
+                <div class="meme" id="don-pollo"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="saltbae" @onclick="@(async() => NavigateToGenerator("salt_bae.jpg"))"></div>
+                <div class="meme" id="saltbae"></div>
             </a>
             <a href="outfitgenerator">
-                <div class="meme" id="cavemanpatrick" @onclick="@(async() => NavigateToGenerator("caveman_patrick.jpg"))"></div>
+                <div class="meme" id="cavemanpatrick"></div>
             </a>
         </div>
 
@@ -78,8 +77,5 @@ p {
 </style>
 
 @code {
-   private void NavigateToGenerator(string memeName){
-        MemeState.SetSelectedMeme(memeName);
-        NavigationManager.NavigateTo("/outfitgenerator");
-    } 
+
 }
