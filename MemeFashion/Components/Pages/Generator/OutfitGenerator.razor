@@ -1,36 +1,176 @@
 ﻿@page "/outfitgenerator"
+@inject MemeGalleryService GalleryService
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Outfit Generator</PageTitle>
+<div class="generator-container">
+    <div class="section-header">
+        <h2>Choose from Popular Memes</h2>
+        <p>Select a meme from our gallery to generate a color palette.</p>
+    </div>
+
+    <div class="meme-gallery">
+        @foreach(var meme in GalleryService.GetMemesPaginated(currentPage, pageSize)) {
+            <div class="meme-item @(selectedMeme == meme ? "selected" : "")" @onclick="() => SelectMeme(meme)">
+                <img src="/images/memes/@meme" alt="Meme image"/>
+            </div>
+        }
+    </div>
+
+    <div class="pagination-controls">
+        <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@(currentPage == 0)">Previous</button>
+        <button class="btn btn-secondary" @onclick="NextPage">Next</button>
+    </div>
+
+    @if (colorPalette.Any())
+    {
+        <div class="color-section">
+            <h3>Color Palette</h3>
+            <div class="color-palette">
+                @foreach (var color in colorPalette)
+                {
+                    <div class="color-swatch" style="background-color: @color">
+                        <span class="color-hex">@color</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
 
 <style>
-    .gallery-item {
+    .generator-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .meme-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .meme-item {
         cursor: pointer;
-        display: inline-block;
-        margin: 5px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .meme-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .meme-item:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .meme-item.selected {
+        border-color: #007bff;
+    }
+
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+
+    .color-section {
+        margin-top: 2rem;
+    }
+
+    .color-palette {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .color-swatch {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .color-hex {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
     }
 </style>
 
-@foreach (var image in memeImages.Take(currentLoadedCount))
-{
-    <div class="gallery-item" @onclick="() => SelectMemeFromGallery(image)">
-        <img src="@($"/images/memes/{image}")" alt="@image" />
-    </div>
-}
-
-<ul>
-    @foreach (var color in colorPalette)
-    {
-        <li>RGB(@color.R, @color.G, @color.B)</li>
-    }
-</ul>
-
 @code {
-    private List<string> memeImages = new();
-    private int currentLoadedCount;
-    private List<Color> colorPalette = new();
+    private int currentPage = 0;
+    private int pageSize = 4;
+    private string selectedMeme =  "";
+    private List<string> colorPalette = new();
 
-    private void SelectMemeFromGallery(string image)
-    {
-        // Implementation for selecting image
+    private async Task PreviousPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            await InvokeAsync(StateHasChanged);
+        }
     }
+
+    private async Task NextPage()
+    {
+        var totalMemes = GalleryService.GetTotalMemeCount();
+        if ((currentPage + 1) * pageSize < totalMemes)
+        {
+            currentPage++;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    protected override async Task OnInitializedAsync() {
+        colorPalette = new List<string>();
+    }
+
+    private async Task SelectMeme(string meme)
+    {
+        selectedMeme = meme;
+        try 
+        {
+            Console.WriteLine($"Selecting meme: {meme}");
+            var imagePath = $"/images/memes/{meme}";
+            Console.WriteLine($"Image path: {$"/images/memes/{meme}"}");
+            await GenerateColorPalette(imagePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in SelectMeme: {ex.Message}");
+        }
+    }
+
+    private async Task GenerateColorPalette(string imagePath) {
+        try
+        {
+            Console.WriteLine($"Attempting to extract colors from: {imagePath}");
+            colorPalette = await JSRuntime.InvokeAsync<List<string>>("extractColors", imagePath);
+            Console.WriteLine($"Colors extracted: {string.Join(", ", colorPalette)}");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating color palette: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
 }
